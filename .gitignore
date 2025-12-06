@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python
 __pycache__/
 *.py[cod]
@@ -78,3 +79,6 @@ Thumbs.db
 # Credentials (keep this file but ignore sensitive data)
 # ADMIN_CREDENTIALS.md contains credentials - consider removing before pushing
 
+=======
+hello
+>>>>>>> aa64e4d39a4325c1d66786c24cc3b41dd88e1125

@@ -1,0 +1,206 @@
+{
+  "info": {
+    "name": "Hospital Appointment Booking API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Patient Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/patient/register",
+          "host": ["{{base_url}}"],
+          "path": ["patient", "register"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\",\n  \"full_name\": \"John Doe\",\n  \"age\": 30,\n  \"gender\": \"Male\",\n  \"phone\": \"1234567890\",\n  \"medical_history\": \"Diabetes\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Patient Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/patient/login",
+          "host": ["{{base_url}}"],
+          "path": ["patient", "login"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/doctor/login",
+          "host": ["{{base_url}}"],
+          "path": ["doctor", "login"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"doctor@example.com\",\n  \"password\": \"Password123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/login",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "login"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List Doctors",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/doctors/",
+          "host": ["{{base_url}}"],
+          "path": ["doctors", ""]
+        }
+      }
+    },
+    {
+      "name": "Doctor Slots",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/doctors/1/slots/",
+          "host": ["{{base_url}}"],
+          "path": ["doctors", "1", "slots", ""]
+        }
+      }
+    },
+    {
+      "name": "Create Slot (Doctor)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/slots/",
+          "host": ["{{base_url}}"],
+          "path": ["slots", ""]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"date\": \"2025-12-10\",\n  \"start_time\": \"09:00:00\",\n  \"end_time\": \"09:30:00\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List Appointments (Patient/Doctor/Admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/appointments/",
+          "host": ["{{base_url}}"],
+          "path": ["appointments", ""]
+        }
+      }
+    },
+    {
+      "name": "Create Appointment (Patient)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/appointments/",
+          "host": ["{{base_url}}"],
+          "path": ["appointments", ""]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"slot_id\": 1\n}"
+        }
+      }
+    },
+    {
+      "name": "Approve Appointment (Doctor/Admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/appointments/1/approve/",
+          "host": ["{{base_url}}"],
+          "path": ["appointments", "1", "approve", ""]
+        }
+      }
+    },
+    {
+      "name": "Reject Appointment (Doctor/Admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/appointments/1/reject/",
+          "host": ["{{base_url}}"],
+          "path": ["appointments", "1", "reject", ""]
+        }
+      }
+    },
+    {
+      "name": "Admin - List Patients",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/patients",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "patients"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    }
+  ]
+}

@@ -7,7 +7,7 @@ services:
       MYSQL_USER: hospital_user
       MYSQL_PASSWORD: hospital_password
     ports:
-      - '3306:3306'
+      - '3307:3306'
     volumes:
       - db_data:/var/lib/mysql
 

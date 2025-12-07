@@ -104,7 +104,7 @@ These are example accounts you can use locally. They are **not** created automat
 1. Make sure the stack is running:
 
 ```bash
-cd E:\hosiptal
+cd <project-root>
 docker compose up -d
 ```
 
@@ -298,6 +298,9 @@ For production:
 ## Postman collection
 
 Import `postman_collection.json` into Postman and set the `base_url` variable to `http://localhost:8000/api` (or your deployed backend URL). Use the login requests to obtain `access_token` and set it in the collection variable for authorized calls.
+<<<<<<< HEAD
 #   H o s p i t a l _ A p p o i n t m e n t 
  
  
+=======
+>>>>>>> a167918 (Updated code with new changes)

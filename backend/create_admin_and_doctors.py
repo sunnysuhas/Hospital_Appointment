@@ -14,6 +14,7 @@ from booking.models import Doctor
 
 User = get_user_model()
 
+
 # Create Admin User
 admin_email = 'admin@hospital.com'
 admin_password = 'Admin@123'

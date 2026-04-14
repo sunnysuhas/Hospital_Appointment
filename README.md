@@ -95,7 +95,7 @@ Located in `frontend/`.
 
 These are example accounts you can use locally. They are **not** created automatically; run the script below once to create them in your database.
 
-- Admin: `rmanu93988@gmail.com` / `manu@123`
+- Admin: `sunnysuhas108@gmail.com` / `suhas2005`
 - Doctor: `doctor1@example.com` / `DoctorPass123!`
 - Patient: `patient1@example.com` / `PatientPass123!`
 
@@ -121,13 +121,13 @@ from booking.models import User, Patient, Doctor
 
 # 1) Admin user
 admin, _ = User.objects.update_or_create(
-    email="rmanu93988@gmail.com",
+    email="sunnysuhas108@gmail.com",
     defaults={
-        "username": "rmanu93988@gmail.com",
+        "username": "sunnysuhas108@gmail.com",
         "role": User.Roles.ADMIN,
     },
 )
-admin.set_password("manu@123")
+admin.set_password("suhas2005")
 admin.save()
 
 # 2) Doctor user + profile
@@ -158,7 +158,7 @@ patient_user, _ = User.objects.update_or_create(
         "role": User.Roles.PATIENT,
     },
 )
-patient_user.set_password("PatientPass123!")
+patient_user.set_password("patient123")
 patient_user.save()
 
 patient_profile, _ = Patient.objects.update_or_create(

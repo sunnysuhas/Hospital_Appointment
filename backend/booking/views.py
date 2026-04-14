@@ -69,7 +69,10 @@ class DoctorViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['get'], url_path='slots')
     def slots(self, request, pk=None):
         doctor = self.get_object()
-        slots = doctor.slots.all()
+        # Show only slots that are NOT booked (approved or pending)
+        slots = doctor.slots.exclude(
+            appointment__status__in=[Appointment.Status.APPROVED, Appointment.Status.PENDING]
+        )
         serializer = SlotSerializer(slots, many=True)
         return Response(serializer.data)
 
@@ -82,7 +85,9 @@ class SlotViewSet(viewsets.ModelViewSet):
         return Slot.objects.filter(doctor__user=self.request.user)
 
     def perform_create(self, serializer):
-        doctor = self.request.user.doctor_profile
+        doctor = getattr(self.request.user, 'doctor_profile', None)
+        if not doctor:
+             raise serializers.ValidationError({'detail': 'Doctor profile not found.'})
         serializer.save(doctor=doctor)
 
 
@@ -91,15 +96,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        # Use role-specific permissions only where necessary; otherwise rely on IsAuthenticated
         if self.action == 'create':
-            # Only patients can create appointments; role is further checked in get_queryset/perform_create
             permission_classes = [IsPatient]
         elif self.action == 'list':
-            # All authenticated roles can list; role-based scoping is in get_queryset
             permission_classes = [IsAuthenticated]
-        elif self.action in ['approve', 'reject']:
-            # Any authenticated user reaches the view; role/ownership checks happen in the action methods
+        elif self.action in ['approve', 'reject', 'cancel']:
             permission_classes = [IsAuthenticated]
         else:
             permission_classes = [IsAuthenticated]
@@ -129,8 +130,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         user = self.request.user
         patient = user.patient_profile
         slot = serializer.validated_data['slot']
-        appointment = serializer.save(patient=patient, doctor=slot.doctor)
-        return appointment
+        # Double check availability in case of race conditions
+        if Appointment.objects.filter(slot=slot).exclude(status=Appointment.Status.REJECTED).exists():
+            raise serializers.ValidationError({"slot_id": "This slot has just been taken."})
+        
+        serializer.save(patient=patient, doctor=slot.doctor)
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -140,10 +144,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Not allowed.'}, status=status.HTTP_403_FORBIDDEN)
         if user.role == 'DOCTOR' and appointment.doctor.user != user:
             return Response({'detail': 'Not allowed.'}, status=status.HTTP_403_FORBIDDEN)
+        
         appointment.status = Appointment.Status.APPROVED
         appointment.save()
-        serializer = self.get_serializer(appointment)
-        return Response(serializer.data)
+        return Response(self.get_serializer(appointment).data)
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
@@ -153,10 +157,20 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Not allowed.'}, status=status.HTTP_403_FORBIDDEN)
         if user.role == 'DOCTOR' and appointment.doctor.user != user:
             return Response({'detail': 'Not allowed.'}, status=status.HTTP_403_FORBIDDEN)
+        
         appointment.status = Appointment.Status.REJECTED
         appointment.save()
-        serializer = self.get_serializer(appointment)
-        return Response(serializer.data)
+        return Response(self.get_serializer(appointment).data)
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        appointment = self.get_object()
+        if appointment.patient.user != request.user and request.user.role != 'ADMIN':
+            return Response({'detail': 'Not allowed.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        appointment.status = Appointment.Status.CANCELLED
+        appointment.save()
+        return Response(self.get_serializer(appointment).data)
 
 
 class AdminDoctorViewSet(viewsets.ModelViewSet):
@@ -165,39 +179,42 @@ class AdminDoctorViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin]
 
     def create(self, request, *args, **kwargs):
-        # Admin creates a new doctor user + profile
         data = request.data
         email = data.get('email')
         password = data.get('password')
         name = data.get('name')
         specialization = data.get('specialization')
-        phone = data.get('phone', '')
+        
         if not all([email, password, name, specialization]):
             return Response({'detail': 'email, password, name, specialization are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if User.objects.filter(email=email).exists():
+            return Response({'detail': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
         user = User.objects.create_user(username=email, email=email, password=password, role=User.Roles.DOCTOR)
-        doctor = Doctor.objects.create(user=user, name=name, specialization=specialization, phone=phone)
-        serializer = self.get_serializer(doctor)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        doctor = Doctor.objects.create(user=user, name=name, specialization=specialization, phone=data.get('phone', ''))
+        return Response(self.get_serializer(doctor).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        # Manually update user email if provided
         data = request.data
-        instance.name = data.get('name', instance.name)
-        instance.specialization = data.get('specialization', instance.specialization)
-        instance.phone = data.get('phone', instance.phone)
-        instance.save()
         if 'email' in data:
-            instance.user.email = data['email']
-            instance.user.username = data['email']
-            instance.user.save()
-        serializer = self.get_serializer(instance)
+            user = instance.user
+            user.email = data['email']
+            user.username = data['email']
+            user.save()
+            
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         user = instance.user
-        self.perform_destroy(instance)
+        instance.delete()
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

@@ -2,8 +2,8 @@
 
 ## Admin Login Information
 
-**Email:** `admin@hospital.com`  
-**Password:** `Admin@123`
+**Email:** `sunnysuhas108@gmail.com`  
+**Password:** `suhas2005`
 
 ## Access URLs
 

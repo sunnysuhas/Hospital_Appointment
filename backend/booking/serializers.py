@@ -15,11 +15,16 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'username', 'password', 'full_name', 'age', 'gender', 'phone', 'medical_history']
+        fields = ['email', 'password', 'full_name', 'age', 'gender', 'phone', 'medical_history']
         extra_kwargs = {
             'password': {'write_only': True},
-            'username': {'required': False, 'allow_blank': True},
+            'email': {'required': True},
         }
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
     def validate(self, attrs):
         password = attrs.get('password')
@@ -34,7 +39,7 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
         medical_history = validated_data.pop('medical_history', '')
 
         email = validated_data.get('email')
-        username = validated_data.get('username') or email
+        username = email # Use email as username for simplicity
 
         user = User.objects.create_user(
             username=username,
@@ -42,7 +47,7 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             role=User.Roles.PATIENT,
         )
-        patient = Patient.objects.create(
+        Patient.objects.create(
             user=user,
             full_name=full_name,
             age=age,
@@ -119,11 +124,15 @@ class DoctorSerializer(serializers.ModelSerializer):
 
 class SlotSerializer(serializers.ModelSerializer):
     doctor = DoctorSerializer(read_only=True)
-    doctor_id = serializers.PrimaryKeyRelatedField(source='doctor', queryset=Doctor.objects.all(), write_only=True, required=False)
+    is_booked = serializers.SerializerMethodField()
 
     class Meta:
         model = Slot
-        fields = ['id', 'doctor', 'doctor_id', 'date', 'start_time', 'end_time']
+        fields = ['id', 'doctor', 'date', 'start_time', 'end_time', 'is_booked']
+        read_only_fields = ['doctor']
+
+    def get_is_booked(self, obj):
+        return Appointment.objects.filter(slot=obj).exclude(status='REJECTED').exists()
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
@@ -134,5 +143,10 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ['id', 'patient', 'doctor', 'slot', 'slot_id', 'status', 'created_at']
-        read_only_fields = ['status', 'created_at']
+        fields = ['id', 'patient', 'doctor', 'slot', 'slot_id', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['status', 'created_at', 'updated_at']
+
+    def validate_slot_id(self, value):
+        if Appointment.objects.filter(slot=value).exclude(status='REJECTED').exists():
+            raise serializers.ValidationError("This slot is already booked.")
+        return value

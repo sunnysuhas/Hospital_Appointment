@@ -4,8 +4,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 })
 
+// Request Interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access')
@@ -14,23 +18,23 @@ api.interceptors.request.use(
     }
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
+// Response Interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 Unauthorized - token expired or invalid
-    if (error.response?.status === 401) {
-      // Clear auth data and redirect to home
+    const originalRequest = error.config
+
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401 && !originalRequest._retry) {
       localStorage.clear()
-      // Only redirect if we're not already on a public page
       if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
         window.location.href = '/'
       }
     }
+
     return Promise.reject(error)
   }
 )

@@ -1,3 +1,3 @@
 #!/bin/bash
 python manage.py migrate
-python manage.py runserver 0.0.0.0:$PORT
+gunicorn hospital_backend.wsgi --log-file -

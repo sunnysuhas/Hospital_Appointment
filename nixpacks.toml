@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["python311", "python311Packages.pip", "gcc", "mysql80"]
-
-[phases.install]
-cmds = ["python3 -m pip install --upgrade pip", "python3 -m pip install -r backend/requirements.txt"]
-
-[start]
-cmd = "cd backend && bash start.sh"

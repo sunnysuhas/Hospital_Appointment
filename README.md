@@ -138,7 +138,7 @@ doctor_user, _ = User.objects.update_or_create(
         "role": User.Roles.DOCTOR,
     },
 )
-doctor_user.set_password("DoctorPass123!")
+doctor_user.set_password("123")
 doctor_user.save()
 
 doctor_profile, _ = Doctor.objects.update_or_create(

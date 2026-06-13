@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { 
   LayoutDashboard, 
   Users, 
@@ -14,7 +15,7 @@ import {
   ShieldCheck,
   House,
   CheckCircle2,
-  CheckCircle
+  UserCircle
 } from 'lucide-react'
 import api from './api/axios'
 import LandingPage from './pages/LandingPage'
@@ -26,6 +27,7 @@ import PatientDashboard from './pages/patient/PatientDashboard'
 import DoctorList from './pages/patient/DoctorList'
 import DoctorDetail from './pages/patient/DoctorDetail'
 import AppointmentHistory from './pages/patient/AppointmentHistory'
+import PatientProfile from './pages/patient/PatientProfile'
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import ManageSlots from './pages/doctor/ManageSlots'
 import DoctorAppointments from './pages/doctor/DoctorAppointments'
@@ -39,13 +41,14 @@ import ProtectedRoute from './routes/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { PageTransition } from './components/ui'
 
 function cn(...inputs) {
   return twMerge(clsx(inputs))
 }
 
 const Layout = ({ children }) => {
-  const { role, logout, user } = useAuth()
+  const { role, logout } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [notifications, setNotifications] = useState([])
   const [clearedIds, setClearedIds] = useState(new Set())
@@ -106,6 +109,7 @@ const Layout = ({ children }) => {
     PATIENT: [
       { name: 'Home', path: '/patient/home', icon: House },
       { name: 'Dashboard', path: '/patient/dashboard', icon: LayoutDashboard },
+      { name: 'Profile', path: '/patient/profile', icon: UserCircle },
       { name: 'Find Doctors', path: '/patient/doctors', icon: Stethoscope },
       { name: 'My Appointments', path: '/patient/appointments', icon: History },
     ],
@@ -318,8 +322,10 @@ const Layout = ({ children }) => {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 relative">
-          <div className="max-w-7xl mx-auto animate-fade-in">
-            {children}
+          <div className="max-w-7xl mx-auto">
+            <PageTransition key={location.pathname}>
+              {children}
+            </PageTransition>
           </div>
         </main>
       </div>
@@ -328,9 +334,12 @@ const Layout = ({ children }) => {
 }
 
 const App = () => {
+  const location = useLocation()
+
   return (
     <Layout>
-      <Routes>
+      <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/patient/login" element={<PatientLogin />} />
         <Route path="/patient/register" element={<PatientRegister />} />
@@ -341,6 +350,7 @@ const App = () => {
         <Route path="/patient" element={<ProtectedRoute allowedRoles={['PATIENT']} />}>
           <Route path="home" element={<PatientHome />} />
           <Route path="dashboard" element={<PatientDashboard />} />
+          <Route path="profile" element={<PatientProfile />} />
           <Route path="doctors" element={<DoctorList />} />
           <Route path="doctors/:id" element={<DoctorDetail />} />
           <Route path="appointments" element={<AppointmentHistory />} />
@@ -362,6 +372,7 @@ const App = () => {
           <Route path="appointments" element={<AppointmentsOverview />} />
         </Route>
       </Routes>
+      </AnimatePresence>
     </Layout>
   )
 }

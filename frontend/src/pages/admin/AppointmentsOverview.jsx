@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Calendar, Clock, User, Stethoscope, Filter, Search, Info, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import { Calendar, Clock, User, Stethoscope, Filter, Search, Info } from 'lucide-react'
 import api from '../../api/axios'
+import { getApiErrorMessage } from '../../utils/apiError'
+import { EmptyState, SkeletonBlock } from '../../components/ui'
 
 const AppointmentsOverview = () => {
   const [appointments, setAppointments] = useState([])
@@ -19,7 +21,7 @@ const AppointmentsOverview = () => {
       const res = await api.get('appointments/', { params })
       setAppointments(res.data || [])
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load appointments')
+      setError(getApiErrorMessage(err, 'Failed to load appointments'))
       setAppointments([])
     } finally {
       setLoading(false)
@@ -113,15 +115,11 @@ const AppointmentsOverview = () => {
       {loading ? (
         <div className="space-y-4">
           {[1,2,3,4].map(i => (
-            <div key={i} className="card h-24 animate-pulse bg-secondary-100/50"></div>
+            <SkeletonBlock key={i} className="h-24" />
           ))}
         </div>
       ) : appointments.length === 0 ? (
-        <div className="card text-center py-20 border-dashed border-2">
-          <Search size={48} className="mx-auto text-secondary-200 mb-4" />
-          <h3 className="text-xl font-bold text-secondary-900">No results found</h3>
-          <p className="text-secondary-500 mt-2">Try adjusting your filters to find existing records.</p>
-        </div>
+        <EmptyState icon={Search} title="No results found" message="Try adjusting your filters to find existing records." />
       ) : (
         <div className="space-y-4">
           {appointments.map((a) => (

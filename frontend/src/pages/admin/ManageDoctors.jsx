@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { UserPlus, Stethoscope, Mail, Phone, Trash2, ShieldCheck, Search, Filter } from 'lucide-react'
+import { UserPlus, Stethoscope, Mail, Phone, Trash2, ShieldCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../api/axios'
+import { getApiErrorMessage } from '../../utils/apiError'
+import { EmptyState, SkeletonBlock } from '../../components/ui'
 
 const ManageDoctors = () => {
   const [doctors, setDoctors] = useState([])
@@ -16,7 +18,7 @@ const ManageDoctors = () => {
       const res = await api.get('admin/doctors/')
       setDoctors(res.data || [])
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load doctors')
+      setError(getApiErrorMessage(err, 'Failed to load doctors'))
       setDoctors([])
     } finally {
       setLoading(false)
@@ -40,7 +42,7 @@ const ManageDoctors = () => {
       toast.success('Doctor registered successfully', { id: toastId })
       await loadDoctors()
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || Object.values(err.response?.data || {}).flat().join('. ') || 'Failed to create doctor'
+      const errorMsg = getApiErrorMessage(err, 'Failed to create doctor')
       toast.error(errorMsg, { id: toastId })
     }
   }
@@ -53,7 +55,7 @@ const ManageDoctors = () => {
       toast.success('Doctor profile removed.', { id: toastId })
       await loadDoctors()
     } catch (err) {
-      toast.error('Failed to delete doctor.', { id: toastId })
+      toast.error(getApiErrorMessage(err, 'Failed to delete doctor.'), { id: toastId })
     }
   }
 
@@ -160,14 +162,11 @@ const ManageDoctors = () => {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[1,2,3,4].map(i => (
-                <div key={i} className="card h-40 animate-pulse bg-secondary-100/50"></div>
+                <SkeletonBlock key={i} className="h-40" />
               ))}
             </div>
           ) : doctors.length === 0 ? (
-            <div className="card text-center py-20 border-dashed border-2">
-              <Stethoscope size={48} className="mx-auto text-secondary-200 mb-4" />
-              <p className="text-secondary-500 font-medium">No medical professionals registered in the system yet.</p>
-            </div>
+            <EmptyState icon={Stethoscope} title="No doctors yet" message="No medical professionals registered in the system yet." />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {doctors.map((d) => (

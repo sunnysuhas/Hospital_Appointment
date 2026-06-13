@@ -6,6 +6,9 @@ from .views import (
     PatientLoginView,
     DoctorLoginView,
     AdminLoginView,
+    PatientProfileView,
+    DoctorDashboardStatsView,
+    AdminDashboardAnalyticsView,
     DoctorViewSet,
     SlotViewSet,
     AppointmentViewSet,
@@ -24,6 +27,9 @@ urlpatterns = [
     path('patient/login', PatientLoginView.as_view(), name='patient-login'),
     path('doctor/login', DoctorLoginView.as_view(), name='doctor-login'),
     path('admin/login', AdminLoginView.as_view(), name='admin-login'),
+    path('patient/profile', PatientProfileView.as_view(), name='patient-profile'),
+    path('doctor/dashboard-stats', DoctorDashboardStatsView.as_view(), name='doctor-dashboard-stats'),
+    path('admin/analytics', AdminDashboardAnalyticsView.as_view(), name='admin-analytics'),
     path('admin/patients', AdminPatientListView.as_view(), name='admin-patients'),
 ]
 

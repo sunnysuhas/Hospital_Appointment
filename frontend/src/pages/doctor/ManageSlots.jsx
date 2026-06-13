@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Calendar, Clock, Plus, Trash2, Info, AlertTriangle } from 'lucide-react'
+import { Calendar, Clock, Plus, Trash2, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../api/axios'
+import { getApiErrorMessage } from '../../utils/apiError'
+import { EmptyState, SkeletonBlock } from '../../components/ui'
 
 const ManageSlots = () => {
   const [slots, setSlots] = useState([])
@@ -16,7 +18,7 @@ const ManageSlots = () => {
       const res = await api.get('slots/')
       setSlots(res.data || [])
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load slots')
+      setError(getApiErrorMessage(err, 'Failed to load slots'))
       setSlots([])
     } finally {
       setLoading(false)
@@ -40,7 +42,7 @@ const ManageSlots = () => {
       toast.success('Slot added successfully', { id: toastId })
       await loadSlots()
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || Object.values(err.response?.data || {}).flat().join('. ') || 'Failed to add slot'
+      const errorMsg = getApiErrorMessage(err, 'Failed to add slot')
       toast.error(errorMsg, { id: toastId })
     }
   }
@@ -53,7 +55,7 @@ const ManageSlots = () => {
       toast.success('Slot removed', { id: toastId })
       await loadSlots()
     } catch (err) {
-      toast.error('Failed to delete slot.', { id: toastId })
+      toast.error(getApiErrorMessage(err, 'Failed to delete slot.'), { id: toastId })
     }
   }
 
@@ -142,14 +144,11 @@ const ManageSlots = () => {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[1,2,3,4].map(i => (
-                <div key={i} className="card h-32 animate-pulse bg-secondary-100/50"></div>
+                <SkeletonBlock key={i} className="h-32" />
               ))}
             </div>
           ) : slots.length === 0 ? (
-            <div className="card text-center py-20 border-dashed border-2">
-              <Calendar size={48} className="mx-auto text-secondary-200 mb-4" />
-              <p className="text-secondary-500 font-medium">No slots created for your schedule yet.</p>
-            </div>
+            <EmptyState icon={Calendar} title="No slots yet" message="No slots created for your schedule yet." />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {slots.map((s) => (

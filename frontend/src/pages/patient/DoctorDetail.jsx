@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Calendar, Clock, Stethoscope, Mail, Phone, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../api/axios'
+import { getApiErrorMessage } from '../../utils/apiError'
+import { EmptyState, SkeletonBlock } from '../../components/ui'
 
 const DoctorDetail = () => {
   const { id } = useParams()
@@ -25,7 +27,7 @@ const DoctorDetail = () => {
         setDoctor(docRes.data)
         setSlots(slotRes.data || [])
       } catch (err) {
-        setError(err.response?.data?.detail || 'Failed to load details')
+        setError(getApiErrorMessage(err, 'Failed to load details'))
       } finally {
         setLoading(false)
       }
@@ -44,7 +46,7 @@ const DoctorDetail = () => {
       const slotRes = await api.get(`doctors/${id}/slots/`)
       setSlots(slotRes.data || [])
     } catch (err) {
-      const errorMsg = err.response?.data?.slot_id?.[0] || err.response?.data?.detail || 'Failed to book appointment'
+      const errorMsg = getApiErrorMessage(err, 'Failed to book appointment')
       toast.error(errorMsg, { id: toastId })
     } finally {
       setBookingId(null)
@@ -52,19 +54,21 @@ const DoctorDetail = () => {
   }
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+    <div className="space-y-6">
+      <SkeletonBlock className="h-56" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[1, 2, 3].map(i => <SkeletonBlock key={i} className="h-32" />)}
+      </div>
     </div>
   )
 
   if (error || !doctor) return (
-    <div className="card text-center py-12">
-      <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
-      <h2 className="text-xl font-bold text-secondary-900">{error || 'Doctor not found'}</h2>
-      <button onClick={() => navigate('/patient/doctors')} className="mt-4 text-primary-600 font-bold flex items-center justify-center mx-auto">
-        <ArrowLeft size={16} className="mr-2" /> Back to list
-      </button>
-    </div>
+    <EmptyState
+      icon={AlertCircle}
+      title={error || 'Doctor not found'}
+      message="Return to the specialist directory and try another doctor."
+      action={<button onClick={() => navigate('/patient/doctors')} className="text-primary-600 font-bold">Back to list</button>}
+    />
   )
 
   return (
@@ -112,10 +116,7 @@ const DoctorDetail = () => {
         </div>
 
         {slots.length === 0 ? (
-          <div className="card text-center py-16 border-dashed bg-secondary-50/50">
-            <Clock size={40} className="mx-auto text-secondary-300 mb-4" />
-            <p className="text-secondary-500 font-medium italic">No available slots for this doctor right now.</p>
-          </div>
+          <EmptyState icon={Clock} title="No available slots" message="No available slots for this doctor right now." />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {slots.map((s) => (

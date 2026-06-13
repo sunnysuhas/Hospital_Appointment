@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Calendar, Clock, Stethoscope, CheckCircle2, XCircle, AlertCircle, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../api/axios'
+import { getApiErrorMessage } from '../../utils/apiError'
+import { EmptyState, SkeletonBlock } from '../../components/ui'
 
 const AppointmentHistory = () => {
   const [appointments, setAppointments] = useState([])
@@ -15,7 +17,7 @@ const AppointmentHistory = () => {
       const res = await api.get('appointments/')
       setAppointments(res.data || [])
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load appointments')
+      setError(getApiErrorMessage(err, 'Failed to load appointments'))
       setAppointments([])
     } finally {
       setLoading(false)
@@ -33,7 +35,7 @@ const AppointmentHistory = () => {
       toast.success('Appointment cancelled.', { id: toastId })
       fetchAppointments()
     } catch (err) {
-      toast.error('Failed to cancel appointment.', { id: toastId })
+      toast.error(getApiErrorMessage(err, 'Failed to cancel appointment.'), { id: toastId })
     }
   }
 
@@ -75,15 +77,11 @@ const AppointmentHistory = () => {
       {loading ? (
         <div className="space-y-4">
           {[1,2,3].map(i => (
-            <div key={i} className="card h-24 animate-pulse bg-secondary-100/50"></div>
+            <SkeletonBlock key={i} className="h-24" />
           ))}
         </div>
       ) : appointments.length === 0 ? (
-        <div className="card text-center py-20 bg-white border-dashed border-2">
-          <Calendar size={48} className="mx-auto text-secondary-200 mb-4" />
-          <h3 className="text-xl font-bold text-secondary-900">No Appointments Found</h3>
-          <p className="text-secondary-500 mt-2">You haven't booked any consultations yet.</p>
-        </div>
+        <EmptyState icon={Calendar} title="No Appointments Found" message="You haven't booked any consultations yet." />
       ) : (
         <div className="space-y-4">
           {appointments.map((a) => (
@@ -123,7 +121,7 @@ const AppointmentHistory = () => {
                       {getStatusIcon(a.status)} {a.status}
                     </div>
                     
-                    {a.status === 'PENDING' && (
+                    {['PENDING', 'APPROVED'].includes(a.status) && (
                       <button 
                         onClick={() => handleCancel(a.id)}
                         className="text-red-500 hover:text-red-700 text-xs font-bold flex items-center transition-colors"

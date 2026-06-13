@@ -1,6 +1,4 @@
-from datetime import date as date_cls
-
-from django.db.models import Q
+from django.db.models import Count
 from rest_framework import generics, status, viewsets, serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -16,6 +14,7 @@ from .serializers import (
     DoctorSerializer,
     SlotSerializer,
     AppointmentSerializer,
+    PatientProfileSerializer,
 )
 
 
@@ -52,6 +51,75 @@ class AdminLoginView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data)
+
+
+class PatientProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = PatientProfileSerializer
+    permission_classes = [IsPatient]
+
+    def get_object(self):
+        return self.request.user.patient_profile
+
+
+class DoctorDashboardStatsView(generics.GenericAPIView):
+    permission_classes = [IsDoctor]
+
+    def get(self, request, *args, **kwargs):
+        appointments = Appointment.objects.filter(doctor__user=request.user)
+        status_counts = {
+            item['status']: item['total']
+            for item in appointments.values('status').annotate(total=Count('id'))
+        }
+        total = appointments.count()
+        approved = status_counts.get(Appointment.Status.APPROVED, 0)
+        pending = status_counts.get(Appointment.Status.PENDING, 0)
+
+        return Response({
+            'total_appointments': total,
+            'approved_appointments': approved,
+            'pending_appointments': pending,
+            'rejected_appointments': status_counts.get(Appointment.Status.REJECTED, 0),
+            'cancelled_appointments': status_counts.get(Appointment.Status.CANCELLED, 0),
+            'available_slots': Slot.objects.filter(doctor__user=request.user).count(),
+            'status_summary': [
+                {'status': status_value, 'count': status_counts.get(status_value, 0)}
+                for status_value, _ in Appointment.Status.choices
+            ],
+        })
+
+
+class AdminDashboardAnalyticsView(generics.GenericAPIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, *args, **kwargs):
+        appointments = Appointment.objects.all()
+        status_counts = {
+            item['status']: item['total']
+            for item in appointments.values('status').annotate(total=Count('id'))
+        }
+        doctor_activity = (
+            Doctor.objects
+            .annotate(total_appointments=Count('appointments'))
+            .order_by('-total_appointments')[:6]
+        )
+
+        return Response({
+            'total_patients': Patient.objects.count(),
+            'total_doctors': Doctor.objects.count(),
+            'total_appointments': appointments.count(),
+            'appointment_status_summary': [
+                {'status': status_value, 'count': status_counts.get(status_value, 0)}
+                for status_value, _ in Appointment.Status.choices
+            ],
+            'doctor_statistics': [
+                {
+                    'doctor': doctor.name,
+                    'specialization': doctor.specialization,
+                    'appointments': doctor.total_appointments,
+                }
+                for doctor in doctor_activity
+            ],
+        })
 
 
 class DoctorViewSet(viewsets.ReadOnlyModelViewSet):
@@ -204,6 +272,8 @@ class AdminDoctorViewSet(viewsets.ModelViewSet):
         # Manually update user email if provided
         data = request.data
         if 'email' in data:
+            if User.objects.exclude(pk=instance.user.pk).filter(email=data['email']).exists():
+                return Response({'detail': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
             user = instance.user
             user.email = data['email']
             user.username = data['email']

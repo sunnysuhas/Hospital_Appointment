@@ -1,11 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Heart, Calendar, Stethoscope, History, Shield, PhoneCall } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
 
 const PatientHome = () => {
-  const { user } = useAuth()
-
   return (
     <div className="space-y-12 animate-fade-in">
       {/* Welcome Section */}

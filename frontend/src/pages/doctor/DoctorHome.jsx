@@ -1,11 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Activity, Calendar, Users, ClipboardList, ShieldCheck, Mail } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
 
 const DoctorHome = () => {
-  const { user } = useAuth()
-
   return (
     <div className="space-y-12 animate-fade-in">
       {/* Welcome Banner */}

@@ -1,6 +1,8 @@
 import axios from 'axios'
+import { getApiErrorMessage } from '../utils/apiError'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/'
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/'
+const API_BASE_URL = rawBaseUrl.endsWith('/') ? rawBaseUrl : `${rawBaseUrl}/`
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -26,6 +28,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const originalRequest = error.config
+    error.userMessage = getApiErrorMessage(error)
 
     // Handle 401 Unauthorized
     if (error.response?.status === 401 && !originalRequest._retry) {

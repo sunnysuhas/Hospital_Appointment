@@ -1,306 +1,257 @@
-# Hospital Appointment Booking System
+# MedBook - Hospital Appointment Booking System
 
-Monolithic Hospital Appointment Booking System built with:
-- Backend: Django + Django REST Framework + JWT (SimpleJWT)
-- Frontend: React (Vite)
-- Database: MySQL
-- Containerization: Docker + docker-compose
+MedBook is a production-ready hospital appointment booking platform built for three roles: patients, doctors, and administrators. It preserves a simple appointment workflow while adding a modern healthcare SaaS interface, PostgreSQL support, deployment-ready configuration, and dashboard analytics.
 
-## Folder structure
+## Features
 
-- `backend/` – Django project (`hospital_backend`) and app (`booking`)
-- `frontend/` – React SPA (Vite) for patient, doctor, and admin UIs
-- `docker-compose.yml` – Orchestrates MySQL, backend, and frontend
-- `postman_collection.json` – Ready-to-import Postman collection
+- JWT authentication with role-based access for `PATIENT`, `DOCTOR`, and `ADMIN`
+- Patient registration and login
+- Patient profile viewing and editing
+- Doctor discovery with specialization search
+- Appointment booking, history, and cancellation
+- Doctor slot management
+- Doctor appointment approval and rejection
+- Doctor dashboard statistics for total, pending, and approved appointments
+- Admin doctor management
+- Admin appointment audit with filters
+- Admin analytics for patients, doctors, appointments, status summary, and doctor activity
+- Framer Motion page transitions and dashboard micro-interactions
+- Recharts dashboard visualizations
+- Toast notifications for login, registration, booking, approval, rejection, and cancellation flows
+- Loading skeletons, empty states, and graceful network error messaging
+- PostgreSQL/Supabase-ready backend
+- Render-ready backend deployment with WhiteNoise static file serving
+- Vercel-ready frontend deployment with `VITE_API_BASE_URL`
 
-## Backend (Django + DRF)
+## Tech Stack
 
-### Models
+**Frontend**
 
-Defined in `backend/booking/models.py`:
-- `User` – Custom user extending `AbstractUser` with `role` (PATIENT, DOCTOR, ADMIN).
-- `Patient` – One-to-one with `User`, fields: `full_name`, `age`, `gender`, `phone`, `medical_history`.
-- `Doctor` – One-to-one with `User`, fields: `name`, `specialization`, `phone`.
-- `Slot` – Fields: `doctor`, `date`, `start_time`, `end_time`.
-- `Appointment` – Fields: `patient`, `doctor`, `slot`, `status` (PENDING/APPROVED/REJECTED), `created_at`.
+- React 18
+- Vite
+- TailwindCSS
+- Axios
+- React Router
+- Framer Motion
+- Recharts
+- React Hot Toast
+- Lucide React
 
-### Key API endpoints
+**Backend**
 
-Base URL: `http://localhost:8000/api/`
+- Django
+- Django REST Framework
+- SimpleJWT
+- WhiteNoise
+- dj-database-url
+- Gunicorn
+
+**Database**
+
+- PostgreSQL
+- Supabase PostgreSQL supported through `DATABASE_URL`
+
+**Deployment**
+
+- Backend: Render
+- Frontend: Vercel
+- Database: Supabase PostgreSQL
+
+## Project Structure
+
+```text
+backend/
+  booking/
+  hospital_backend/
+  requirements.txt
+  Procfile
+  start.sh
+frontend/
+  src/
+  package.json
+render.yaml
+ENVIRONMENT.md
+vercel.json
+```
+
+## Environment Variables
+
+Backend variables:
+
+```env
+DJANGO_SECRET_KEY=replace-with-a-secure-secret
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/hospital_db
+DATABASE_SSL_REQUIRE=False
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+Frontend variables:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api/
+```
+
+See [ENVIRONMENT.md](ENVIRONMENT.md) for production examples and deployment notes.
+
+## Local Setup
+
+### 1. Backend
+
+Create and activate a virtual environment:
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Create `backend/.env` from `backend/.env.example`, then set your PostgreSQL connection.
+
+Apply migrations and run the API:
+
+```bash
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8000
+```
+
+Create an admin user:
+
+```bash
+python manage.py createsuperuser
+```
+
+After creating the user, set its `role` to `ADMIN` in Django admin or the Django shell.
+
+### 2. Frontend
+
+Create `frontend/.env`:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api/
+```
+
+Install dependencies and start Vite:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`.
+
+## API Overview
+
+Base URL:
+
+```text
+http://localhost:8000/api/
+```
 
 Auth:
+
 - `POST /api/patient/register`
 - `POST /api/patient/login`
 - `POST /api/doctor/login`
 - `POST /api/admin/login`
 
-Doctors & slots:
-- `GET /api/doctors/` – List doctors (optional `?specialization=` filter).
-- `GET /api/doctors/<id>/` – Doctor detail.
-- `GET /api/doctors/<id>/slots/` – Doctor slots.
-- `GET /api/slots/` – Doctor: list own slots.
-- `POST /api/slots/` – Doctor: create slot.
-- `PUT/PATCH/DELETE /api/slots/<id>/` – Doctor: edit/delete slot.
+Patient:
 
-Appointments:
-- `GET /api/appointments/` –
-  - Patient: own appointments.
-  - Doctor: appointments assigned to doctor.
-  - Admin: all appointments, supports `?doctor_id=`, `?status=`, `?date=` filters.
-- `POST /api/appointments/` – Patient: create appointment (body: `{ "slot_id": <id> }`).
-- `POST /api/appointments/<id>/approve/` – Doctor/Admin.
-- `POST /api/appointments/<id>/reject/` – Doctor/Admin.
+- `GET /api/patient/profile`
+- `PATCH /api/patient/profile`
+- `GET /api/doctors/`
+- `GET /api/doctors/<id>/slots/`
+- `POST /api/appointments/`
+- `POST /api/appointments/<id>/cancel/`
 
-Admin-only:
-- `GET /api/admin/patients` – List patients.
-- `GET /api/admin/doctors/` – List doctors (admin view).
-- `POST /api/admin/doctors/` – Create doctor + linked user.
-- `PUT/PATCH /api/admin/doctors/<id>/` – Update doctor.
-- `DELETE /api/admin/doctors/<id>/` – Delete doctor + user.
+Doctor:
 
-### Auth and permissions
+- `GET /api/doctor/dashboard-stats`
+- `GET /api/slots/`
+- `POST /api/slots/`
+- `DELETE /api/slots/<id>/`
+- `GET /api/appointments/`
+- `POST /api/appointments/<id>/approve/`
+- `POST /api/appointments/<id>/reject/`
 
-- JWT handled by `djangorestframework-simplejwt`.
-- Login endpoints return: `access`, `refresh`, `role`, and relevant IDs (`user_id`, `patient_id` or `doctor_id`).
-- Role-based permissions are implemented in `backend/booking/permissions.py` and used by viewsets.
+Admin:
 
-### MySQL configuration
+- `GET /api/admin/analytics`
+- `GET /api/admin/patients`
+- `GET /api/admin/doctors/`
+- `POST /api/admin/doctors/`
+- `PATCH /api/admin/doctors/<id>/`
+- `DELETE /api/admin/doctors/<id>/`
+- `GET /api/appointments/`
 
-In `backend/hospital_backend/settings.py`:
+## Supabase Setup
 
-- Engine: `django.db.backends.mysql`.
-- Config via environment variables:
-  - `MYSQL_DATABASE`
-  - `MYSQL_USER`
-  - `MYSQL_PASSWORD`
-  - `MYSQL_HOST`
-  - `MYSQL_PORT`
+1. Create a Supabase project.
+2. Go to **Project Settings > Database**.
+3. Copy the PostgreSQL connection string.
+4. Replace the password placeholder.
+5. Ensure the URL includes SSL, for example `?sslmode=require`.
+6. Set the final value as `DATABASE_URL`.
+7. Set `DATABASE_SSL_REQUIRE=True` in production.
 
-### Local backend commands (without Docker)
+## Render Deployment
 
-From `backend/` (with a Python env that has deps from `requirements.txt` installed and MySQL reachable):
+The backend is configured with [render.yaml](render.yaml).
 
-```bash
-python manage.py makemigrations booking
-python manage.py migrate
-python manage.py createsuperuser  # then set role=ADMIN via Django admin or shell
-python manage.py runserver 0.0.0.0:8000
+1. Push the repository to GitHub.
+2. In Render, create a new Blueprint from the repository.
+3. Set these environment variables:
+   - `DJANGO_SECRET_KEY`
+   - `DJANGO_DEBUG=False`
+   - `DATABASE_URL`
+   - `DATABASE_SSL_REQUIRE=True`
+   - `DJANGO_ALLOWED_HOSTS`
+   - `CORS_ALLOWED_ORIGINS`
+   - `CSRF_TRUSTED_ORIGINS`
+4. Deploy.
+
+`backend/start.sh` runs static collection, migrations, and Gunicorn.
+
+## Vercel Deployment
+
+1. Import the repository in Vercel.
+2. Use the Vite preset.
+3. Set the frontend root directory to `frontend`.
+4. Add:
+
+```env
+VITE_API_BASE_URL=https://your-render-service.onrender.com/api/
 ```
 
-## Frontend (React + Vite)
+5. Deploy the frontend.
+6. Add your Vercel domain to `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` in Render.
 
-Located in `frontend/`.
+## Screenshots
 
-## Demo users (example registrations)
+Add screenshots here after deployment:
 
-These are example accounts you can use locally. They are **not** created automatically; run the script below once to create them in your database.
+- Landing page
+- Patient dashboard
+- Patient profile
+- Doctor dashboard
+- Admin analytics dashboard
+- Appointment booking flow
 
-- Admin: `sunnysuhas108@gmail.com` / `suhas2005`
-- Doctor: `doctor1@example.com` / `DoctorPass123!`
-- Patient: `patient1@example.com` / `PatientPass123!`
+## Future Improvements
 
-### Creating the demo users
+- Email notifications for appointment status updates
+- Calendar export for approved appointments
+- Doctor profile photos and department pages
+- Admin CSV export for appointment reports
+- Automated tests for API permissions and role workflows
+- CI pipeline for backend checks and frontend builds
+- Password reset and email verification
+- Audit logging for admin actions
 
-1. Make sure the stack is running:
+## Notes
 
-```bash
-cd <project-root>
-docker compose up -d
-```
-
-2. Open a Django shell inside the backend container and run the following:
-
-```bash
-docker compose exec django-backend python manage.py shell
-```
-
-Then paste this Python code:
-
-```python
-from booking.models import User, Patient, Doctor
-
-# 1) Admin user
-admin, _ = User.objects.update_or_create(
-    email="sunnysuhas108@gmail.com",
-    defaults={
-        "username": "sunnysuhas108@gmail.com",
-        "role": User.Roles.ADMIN,
-    },
-)
-admin.set_password("suhas2005")
-admin.save()
-
-# 2) Doctor user + profile
-doctor_user, _ = User.objects.update_or_create(
-    email="doctor1@example.com",
-    defaults={
-        "username": "doctor1@example.com",
-        "role": User.Roles.DOCTOR,
-    },
-)
-doctor_user.set_password("123")
-doctor_user.save()
-
-doctor_profile, _ = Doctor.objects.update_or_create(
-    user=doctor_user,
-    defaults={
-        "name": "Dr. John Doe",
-        "specialization": "Cardiology",
-        "phone": "+1-555-000-1111",
-    },
-)
-
-# 3) Patient user + profile
-patient_user, _ = User.objects.update_or_create(
-    email="patient1@example.com",
-    defaults={
-        "username": "patient1@example.com",
-        "role": User.Roles.PATIENT,
-    },
-)
-patient_user.set_password("patient123")
-patient_user.save()
-
-patient_profile, _ = Patient.objects.update_or_create(
-    user=patient_user,
-    defaults={
-        "full_name": "Jane Smith",
-        "age": 30,
-        "gender": "F",
-        "phone": "+1-555-222-3333",
-        "medical_history": "N/A",
-    },
-)
-
-print("Demo users created/updated:")
-print("  Admin:", admin.email)
-print("  Doctor:", doctor_user.email)
-print("  Patient:", patient_user.email)
-```
-
-3. Exit the shell. You can now log in with the above credentials on the corresponding login pages in the frontend.
-
-Key concepts:
-- Routing via `react-router-dom` in `src/App.jsx`.
-- Auth context in `src/context/AuthContext.jsx` – stores JWT tokens and role in `localStorage`.
-- Axios client in `src/api/axios.js` – uses `VITE_API_BASE_URL` (defaults to `http://localhost:8000/api/`).
-
-Pages:
-- Public: `LandingPage`, `PatientLogin`, `PatientRegister`, `DoctorLogin`, `AdminLogin`.
-- Patient: `PatientDashboard`, `DoctorList`, `DoctorDetail`, `AppointmentHistory`.
-- Doctor: `DoctorDashboard`, `ManageSlots`, `DoctorAppointments`.
-- Admin: `AdminDashboard`, `ManageDoctors`, `AppointmentsOverview`.
-
-Protected routes are implemented via `src/routes/ProtectedRoute.jsx` and role checks.
-
-### Local frontend commands (without Docker)
-
-From `frontend/`:
-
-```bash
-npm install
-npm run dev -- --host 0.0.0.0 --port 3000
-```
-
-Then open `http://localhost:3000`.
-
-## Running with Docker and docker-compose
-
-### Prerequisites
-
-- Docker
-- docker-compose (v2 or higher)
-
-### Single command
-
-From the repository root:
-
-```bash
-docker-compose up --build
-```
-
-This will:
-- Start MySQL on port `3306`.
-- Build and run the Django backend on `http://localhost:8000`.
-- Build and run the React frontend on `http://localhost:3000`.
-- Automatically run `makemigrations` and `migrate` for the `booking` app.
-
-### Initial admin setup
-
-After the containers are up:
-
-1. Create an admin user inside the backend container:
-
-   ```bash
-   docker compose exec django-backend python manage.py createsuperuser
-   ```
-
-2. In Django admin (`http://localhost:8000/admin/`), edit that user and set `role = ADMIN`.
-
-3. You can also create additional admin/doctor accounts via the admin UI or using the `/api/admin/doctors/` endpoints for doctors.
-
-## AWS EC2 deployment guide
-
-This project is designed to run on a single EC2 instance using Docker and docker-compose.
-
-### 1. Launch EC2 instance
-
-- Use Ubuntu LTS (e.g., 22.04).
-- Instance size: t3.small or larger (for MySQL + app containers).
-- Configure security group:
-  - Allow SSH (22) from your IP.
-  - Allow HTTP (80) from 0.0.0.0/0.
-  - Optionally allow 3000/8000 for debugging (or use an Nginx proxy to expose only 80/443).
-
-### 2. Install Docker and docker-compose
-
-SSH into the instance and run:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-sudo usermod -aG docker $USER
-```
-
-Log out and back in so your user can run `docker` without `sudo`.
-
-### 3. Deploy the app
-
-```bash
-git clone <your-repo-url>.git hospital-app
-cd hospital-app
-
-# (optional) edit docker-compose.yml to adjust DB passwords, secrets, ALLOWED_HOSTS
-
-docker compose up -d --build
-```
-
-- Backend will be on port 8000, frontend on 3000 by default.
-- For public access over port 80/443, either:
-  - Adjust security groups and map ports 80/443 in an Nginx reverse proxy container, or
-  - Use an ALB (Application Load Balancer) pointing to the instance.
-
-### 4. Environment hardening
-
-For production:
-- Set `DJANGO_DEBUG=0` and a strong `DJANGO_SECRET_KEY` in `docker-compose.yml` or EC2 environment.
-- Restrict `DJANGO_ALLOWED_HOSTS` to your domain name and/or EC2 public IP.
-- Use stronger MySQL credentials and consider external RDS if needed.
-
-## Postman collection
-
-Import `postman_collection.json` into Postman and set the `base_url` variable to `http://localhost:8000/api` (or your deployed backend URL). Use the login requests to obtain `access_token` and set it in the collection variable for authorized calls.
-<<<<<<< HEAD
-#   H o s p i t a l _ A p p o i n t m e n t 
- 
- 
-=======
->>>>>>> a167918 (Updated code with new changes)
+This project no longer requires Docker or a MySQL container. It runs locally with Python, Node.js, and PostgreSQL, and deploys cleanly to Render, Supabase, and Vercel.

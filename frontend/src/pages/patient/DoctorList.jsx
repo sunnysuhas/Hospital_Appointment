@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Stethoscope, ChevronRight, Info } from 'lucide-react'
 import api from '../../api/axios'
+import { getApiErrorMessage } from '../../utils/apiError'
+import { EmptyState, SkeletonBlock } from '../../components/ui'
 
 const DoctorList = () => {
   const [doctors, setDoctors] = useState([])
@@ -18,7 +20,7 @@ const DoctorList = () => {
       const res = await api.get('doctors/', { params })
       setDoctors(res.data || [])
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load doctors')
+      setError(getApiErrorMessage(err, 'Failed to load doctors'))
       setDoctors([])
     } finally {
       setLoading(false)
@@ -69,23 +71,20 @@ const DoctorList = () => {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1,2,3,4,5,6].map(i => (
-            <div key={i} className="card h-56 animate-pulse bg-secondary-100/50"></div>
+            <SkeletonBlock key={i} className="h-56" />
           ))}
         </div>
       ) : doctors.length === 0 ? (
-        <div className="card text-center py-16 bg-white border-dashed border-2">
-          <div className="bg-secondary-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-secondary-300">
-            <Stethoscope size={40} />
-          </div>
-          <h3 className="text-2xl font-bold text-secondary-900 mb-2">No Specialists Found</h3>
-          <p className="text-secondary-500 max-w-sm mx-auto">We couldn't find any doctors matching your search. Try a different specialization or browse all.</p>
-          <button 
-            onClick={() => {setSpecialization(''); fetchDoctors('')}} 
-            className="mt-6 text-primary-600 font-bold hover:text-primary-700 transition-colors"
-          >
-            Clear all filters
-          </button>
-        </div>
+        <EmptyState
+          icon={Stethoscope}
+          title="No Specialists Found"
+          message="We couldn't find any doctors matching your search. Try a different specialization or browse all."
+          action={(
+            <button onClick={() => {setSpecialization(''); fetchDoctors('')}} className="text-primary-600 font-bold hover:text-primary-700 transition-colors">
+              Clear all filters
+            </button>
+          )}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {doctors.map((doctor) => (

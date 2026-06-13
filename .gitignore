@@ -60,9 +60,6 @@ dist-ssr/
 *~
 .DS_Store
 
-# Docker
-.dockerignore
-
 # Database
 *.db
 *.sqlite
@@ -74,6 +71,3 @@ logs/
 # OS
 Thumbs.db
 .DS_Store
-
-# Credentials (keep this file but ignore sensitive data)
-# ADMIN_CREDENTIALS.md contains credentials - consider removing before pushing

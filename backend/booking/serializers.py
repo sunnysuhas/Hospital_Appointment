@@ -122,6 +122,30 @@ class DoctorSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'specialization', 'phone', 'email']
 
 
+class PatientProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email')
+
+    class Meta:
+        model = Patient
+        fields = ['id', 'email', 'full_name', 'age', 'gender', 'phone', 'medical_history', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_email(self, value):
+        user = self.instance.user if self.instance else None
+        if User.objects.exclude(pk=getattr(user, 'pk', None)).filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+        email = user_data.get('email')
+        if email:
+            instance.user.email = email
+            instance.user.username = email
+            instance.user.save(update_fields=['email', 'username'])
+        return super().update(instance, validated_data)
+
+
 class SlotSerializer(serializers.ModelSerializer):
     doctor = DoctorSerializer(read_only=True)
     is_booked = serializers.SerializerMethodField()

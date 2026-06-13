@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Calendar, Clock, User, CheckCircle2, XCircle, AlertCircle, Info } from 'lucide-react'
+import { Calendar, Clock, User, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../api/axios'
+import { getApiErrorMessage } from '../../utils/apiError'
+import { EmptyState, SkeletonBlock } from '../../components/ui'
 
 const DoctorAppointments = () => {
   const [appointments, setAppointments] = useState([])
@@ -15,7 +17,7 @@ const DoctorAppointments = () => {
       const res = await api.get('appointments/')
       setAppointments(res.data || [])
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load appointments')
+      setError(getApiErrorMessage(err, 'Failed to load appointments'))
       setAppointments([])
     } finally {
       setLoading(false)
@@ -33,7 +35,7 @@ const DoctorAppointments = () => {
       toast.success(`Appointment ${action === 'approve' ? 'approved' : 'rejected'}.`, { id: toastId })
       await loadAppointments()
     } catch (err) {
-      toast.error(`Failed to ${action} appointment.`, { id: toastId })
+      toast.error(getApiErrorMessage(err, `Failed to ${action} appointment.`), { id: toastId })
     }
   }
 
@@ -63,15 +65,11 @@ const DoctorAppointments = () => {
       {loading ? (
         <div className="space-y-4">
           {[1,2,3].map(i => (
-            <div key={i} className="card h-28 animate-pulse bg-secondary-100/50"></div>
+            <SkeletonBlock key={i} className="h-28" />
           ))}
         </div>
       ) : appointments.length === 0 ? (
-        <div className="card text-center py-20 border-dashed border-2">
-          <Calendar size={48} className="mx-auto text-secondary-200 mb-4" />
-          <h3 className="text-xl font-bold text-secondary-900">No Appointments</h3>
-          <p className="text-secondary-500 mt-2">You don't have any consultation requests at the moment.</p>
-        </div>
+        <EmptyState icon={Calendar} title="No Appointments" message="You don't have any consultation requests at the moment." />
       ) : (
         <div className="space-y-4">
           {appointments.map((a) => (

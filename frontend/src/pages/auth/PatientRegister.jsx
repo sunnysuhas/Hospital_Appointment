@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../../api/axios'
 import { UserPlus, AlertCircle, Phone, Fingerprint, Mail, Users, HeartPulse, Activity, Lock } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { getApiErrorMessage } from '../../utils/apiError'
 
 const PatientRegister = () => {
   const [form, setForm] = useState({
@@ -35,31 +37,12 @@ const PatientRegister = () => {
         phone: form.phone,
         medical_history: form.medical_history || '',
       })
+      toast.success('Registration successful. Please sign in.')
       navigate('/patient/login')
     } catch (err) {
-      let errorMessage = 'Registration failed'
-      if (err.response?.data) {
-        const data = err.response.data
-        if (typeof data === 'object') {
-          const errors = []
-          if (data.detail) errors.push(data.detail)
-          else if (data.non_field_errors) errors.push(...data.non_field_errors)
-          else {
-            Object.keys(data).forEach((key) => {
-              if (Array.isArray(data[key])) errors.push(...data[key])
-              else errors.push(data[key])
-            })
-          }
-          if (errors.length > 0) errorMessage = errors.join('. ')
-        } else if (typeof data === 'string') {
-          errorMessage = data
-        }
-      } else if (err.message) {
-        errorMessage = err.message
-      } else if (!err.response) {
-        errorMessage = 'Network error. Please check if the backend server is running.'
-      }
+      const errorMessage = getApiErrorMessage(err, 'Registration failed')
       setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }

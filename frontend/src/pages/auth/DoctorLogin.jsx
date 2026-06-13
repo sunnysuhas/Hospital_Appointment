@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 import { LogIn, UserCircle, Lock, AlertCircle, Stethoscope } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { getApiErrorMessage } from '../../utils/apiError'
 
 const DoctorLogin = () => {
   const [email, setEmail] = useState('')
@@ -19,10 +21,12 @@ const DoctorLogin = () => {
     try {
       const res = await api.post('doctor/login', { email, password })
       login(res.data)
+      toast.success('Welcome back, Doctor.')
       navigate('/doctor/home')
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || err.response?.data?.non_field_errors?.[0] || err.message || 'Invalid credentials'
+      const errorMsg = getApiErrorMessage(err, 'Invalid credentials')
       setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }

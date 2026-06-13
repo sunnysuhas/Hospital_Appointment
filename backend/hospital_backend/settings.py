@@ -23,7 +23,10 @@ DEBUG = env_bool('DJANGO_DEBUG', True)
 if not DEBUG and SECRET_KEY == 'django-insecure-fallback-only-for-dev':
     raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG=False.')
 
-ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = env_list(
+    'DJANGO_ALLOWED_HOSTS',
+    'localhost,127.0.0.1,hospital-appointment-20uu.onrender.com',
+)
 render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if render_hostname:
     ALLOWED_HOSTS.append(render_hostname)
@@ -148,9 +151,12 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = env_list(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000',
+    'https://hospital-appointment-one-phi.vercel.app,http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000',
 )
-CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', '')
+CSRF_TRUSTED_ORIGINS = env_list(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://hospital-appointment-one-phi.vercel.app',
+)
 CORS_ALLOW_CREDENTIALS = True
 if env_bool('CORS_ALLOW_ALL', False):
     CORS_ALLOW_ALL_ORIGINS = True

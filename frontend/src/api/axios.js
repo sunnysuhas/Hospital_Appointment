@@ -1,8 +1,15 @@
 import axios from 'axios'
 import { getApiErrorMessage } from '../utils/apiError'
 
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/'
-const API_BASE_URL = rawBaseUrl.endsWith('/') ? rawBaseUrl : `${rawBaseUrl}/`
+const rawBaseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:8000/api/'
+
+const normalizedBaseUrl = rawBaseUrl.replace(/\/+$|^\s+|\s+$/g, '')
+const API_BASE_URL = normalizedBaseUrl.endsWith('/api')
+  ? `${normalizedBaseUrl}/`
+  : `${normalizedBaseUrl}/api/`
 
 const api = axios.create({
   baseURL: API_BASE_URL,
